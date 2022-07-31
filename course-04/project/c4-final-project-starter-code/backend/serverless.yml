@@ -23,10 +23,13 @@ provider:
   # Use these variables in the functions and resouorces section below. For example, 
   # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
   environment:
+    IS_OFFLINE: false
     TODOS_TABLE: Todos-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
-    ATTACHMENT_S3_BUCKET: serverless-c4-todo-images-${self:provider.stage}
+    ATTACHMENT_S3_BUCKET: udacity12345-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
+    AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
+    AUTH_0_SECRET_FIELD: Auth0Secret
 
   logs:
     # Enable API Gateway logs
@@ -40,6 +43,14 @@ provider:
             - xray:PutTelemetryRecords
             - xray:PutTraceSegments
           Resource: "*"
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource: !Ref Auth0Secret
+        - Effect: Allow
+          Action:
+            - kms:Decrypt
+          Resource: !GetAtt KMSKey.Arn
 
 
 functions:
@@ -126,3 +137,36 @@ resources:
     BucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
+    KMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: KMS key to encrypt Auth0 secret
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: key-default-1
+        Statement:
+          - Sid: Allow administration of the key
+            Effect: Allow
+            Principal:
+              AWS:
+                Fn::Join:
+                - ':'
+                - - 'arn:aws:iam:'
+                  - Ref: AWS::AccountId
+                  - 'root'
+            Action:
+              - 'kms:*'
+            Resource: '*'
+
+    KMSKeyAlias:
+      Type: AWS::KMS::Alias
+      Properties:
+        AliasName: alias/auth0Key-${self:provider.stage}
+        TargetKeyId: !Ref KMSKey
+
+    Auth0Secret:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: ${self:provider.environment.AUTH_0_SECRET_ID}
+        Description: Auth0 secret
+        KmsKeyId: !Ref KMSKey  
