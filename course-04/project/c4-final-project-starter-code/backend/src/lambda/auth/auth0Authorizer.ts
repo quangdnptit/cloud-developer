@@ -18,11 +18,11 @@ const logger = createLogger('auth')
 const jwksUrl = 'https://dev-e4igrk0p.us.auth0.com/.well-known/jwks.json'
 
 export const handler = async (
-  event: CustomAuthorizerEvent
+  event: CustomAuthorizerEvent, context
 ): Promise<CustomAuthorizerResult> => {
   logger.info('Authorizing a user', event.authorizationToken)
   try {
-    const jwtToken = await verifyToken(event.authorizationToken)
+    const jwtToken = await verifyToken(event.authorizationToken, context.AUTH0_SECRET[secretField])
     logger.info('User was authorized', jwtToken)
 
     return {
@@ -57,11 +57,11 @@ export const handler = async (
   }
 }
 
-async function verifyToken(authHeader: string): Promise<JwtPayload> {
+async function verifyToken(authHeader: string, secret: string): Promise<JwtPayload> {
   const token = getToken(authHeader)
   const jwt: Jwt = decode(token, { complete: true }) as Jwt
 
-  return verify(token, secret) as JwtToken
+  return verify(token, secret) as JwtPayload
 
   // TODO: Implement token verification
   // You should implement it similarly to how it was implemented for the exercise for the lesson 5

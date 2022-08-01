@@ -4,6 +4,7 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { createLogger } from '../utils/logger'
 import { TodoItem } from '../models/TodoItem'
 import { TodoUpdate } from '../models/TodoUpdate';
+import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
 
 const XAWS = AWSXRay.captureAWS(AWS)
 
@@ -27,6 +28,15 @@ export class TodoAccess {
       const items = result.Items   
       return items as TodoItem[]
     }
+
+    async updateAttachment(userId: String, todoId: String, url: String) {
+      await this.docClient.update({
+        TableName: this.todoTable,
+        Key: {userId: userId,  todoId: todoId },
+        UpdateExpression: 'set attachmentUrl = :url',
+        ExpressionAttributeValues: { ':url': url }
+      }).promise()
+    }
   
     async createTodo(todoItem: TodoItem): Promise<TodoItem> {
       await this.docClient.put({
@@ -37,18 +47,33 @@ export class TodoAccess {
       return todoItem
     }
 
+    async updateTodo(userId: String, todoId: String, updateTodoRequest: UpdateTodoRequest): Promise<TodoUpdate> {
+      await this.docClient.update({
+        TableName: this.todoTable,
+        Key: {userId: userId,  todoId: todoId},
+        UpdateExpression: 'set name = :name, dueDate = :dueDate, done = :done',
+        ExpressionAttributeValues: { ':name': updateTodoRequest.name, ':dueDate': updateTodoRequest.dueDate,':done': updateTodoRequest.done },
+      }).promise()
+      
+      const todoUpdate: TodoUpdate = {
+        ...updateTodoRequest
+      }
 
-    async deleteTodo(todoId: String, userId: String): Promise<any> {
+      return todoUpdate
+    }
+
+    async deleteTodo(todoId: String, userId: String) {
       await this.docClient.delete({
         TableName: this.todoTable,
         Key: {userId: userId,  todoId: todoId }
-      }).promise()
+      })
     }
 
-    async findTodoByUserId(userId: String): Promise<TodoItem[]> {
+    async findByUserId(userId: String): Promise<TodoItem[]> {
       const result = await this.docClient.query({
         TableName: this.todoTable,
         KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: { ':userId': userId }
       }).promise()
   
       const items = result.Items   
