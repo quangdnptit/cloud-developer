@@ -23,7 +23,7 @@ export const handler = middy(
         newItem
       })
     }
-  }
+  } 
 )
 
 handler.use(
