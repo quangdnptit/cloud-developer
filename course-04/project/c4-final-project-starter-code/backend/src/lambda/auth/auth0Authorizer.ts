@@ -5,8 +5,8 @@ import { verify } from 'jsonwebtoken'
 import { createLogger } from '../../utils/logger'
 import { JwtPayload } from '../../auth/JwtPayload'
 
-// const secretId = process.env.AUTH_0_SECRET_ID
-const secretField = process.env.AUTH_0_SECRET_FIELD
+import * as middy from 'middy'
+import { secretsManager } from 'middy/middlewares'
 
 const logger = createLogger('auth')
 
@@ -15,12 +15,16 @@ const logger = createLogger('auth')
 // To get this URL you need to go to an Auth0 page -> Show Advanced Settings -> Endpoints -> JSON Web Key Set
 // const jwksUrl = 'https://dev-e4igrk0p.us.auth0.com/.well-known/jwks.json'
 
-export const handler = async (
-  event: CustomAuthorizerEvent, context
+const secretId = process.env.AUTH_0_SECRET_ID
+const secretField = process.env.AUTH_0_SECRET_FIELD
+
+export const handler = middy(async (
+  event: CustomAuthorizerEvent,
+  context
 ): Promise<CustomAuthorizerResult> => {
   logger.info('Authorizing a user', event.authorizationToken)
   try {
-    const jwtToken = await verifyToken(event.authorizationToken, context.AUTH0_SECRET[secretField])
+    const jwtToken = verifyToken(event.authorizationToken, context.AUTH0_SECRET[secretField])
     logger.info('User was authorized', jwtToken)
 
     return {
@@ -53,17 +57,11 @@ export const handler = async (
       }
     }
   }
-}
+})
 
-async function verifyToken(authHeader: string, secret: string): Promise<JwtPayload> {
+function verifyToken(authHeader: string, secret: string): JwtPayload {
   const token = getToken(authHeader)
-  // const jwt: Jwt = decode(token, { complete: true }) as Jwt
-
   return verify(token, secret) as JwtPayload
-
-  // TODO: Implement token verification
-  // You should implement it similarly to how it was implemented for the exercise for the lesson 5
-  // You can read more about how to do this here: https://auth0.com/blog/navigating-rs256-and-jwks/
 }
 
 function getToken(authHeader: string): string {
@@ -77,3 +75,15 @@ function getToken(authHeader: string): string {
 
   return token
 }
+
+handler.use(
+  secretsManager({
+    cache: true,
+    cacheExpiryInMillis: 60000,
+    // Throw an error if can't read the secret
+    throwOnFailedCall: true,
+    secrets: {
+      AUTH0_SECRET: secretId
+    }
+  })
+)

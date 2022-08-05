@@ -1,9 +1,8 @@
-
 import { CustomAuthorizerEvent, CustomAuthorizerResult } from 'aws-lambda'
 import 'source-map-support/register'
 
 import { verify } from 'jsonwebtoken'
-import { JwtToken } from '../../auth/JwtToken'
+import { JwtPayload } from '../../auth/JwtPayload'
 
 const cert = `-----BEGIN CERTIFICATE-----
 MIIDDTCCAfWgAwIBAgIJet4ZtAMZJ4mkMA0GCSqGSIb3DQEBCwUAMCQxIjAgBgNV
@@ -28,6 +27,7 @@ Lj2cnvlLc0IdLih4jrW7Eqc=
 export const handler = async (event: CustomAuthorizerEvent): Promise<CustomAuthorizerResult> => {
   try {
     const jwtToken = verifyToken(event.authorizationToken)
+
     return {
       principalId: jwtToken.sub,
       policyDocument: {
@@ -60,7 +60,7 @@ export const handler = async (event: CustomAuthorizerEvent): Promise<CustomAutho
   }
 }
 
-function verifyToken(authHeader: string): JwtToken {
+function verifyToken(authHeader: string): JwtPayload {
   if (!authHeader)
     throw new Error('No authentication header')
 
@@ -70,5 +70,5 @@ function verifyToken(authHeader: string): JwtToken {
   const split = authHeader.split(' ')
   const token = split[1]
 
-  return verify(token, cert, { algorithms: ['RS256'] }) as JwtToken
+  return verify(token, cert, { algorithms: ['RS256'] }) as JwtPayload
 }

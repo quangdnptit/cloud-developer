@@ -46,8 +46,12 @@ provider:
 
 functions:
 
-  Auth:
-    handler: src/lambda/auth/auth0Authorizer.handler
+  # Auth:
+  #   handler: src/lambda/auth/auth0Authorizer.handler
+
+
+  RS256Auth:
+    handler: src/lambda/auth/rs256Auth0Authorizer.handler  
 
   # TODO: Configure this function - 
   # Provide iamRoleStatements property for performing Actions on DynamoDB
@@ -58,7 +62,7 @@ functions:
           method: get
           path: todos
           cors: true
-          authorizer: Auth
+          authorizer: RS256Auth
 
     iamRoleStatements:
       - Effect: Allow
@@ -80,7 +84,7 @@ functions:
           method: post
           path: todos
           cors: true
-          authorizer: Auth
+          authorizer: RS256Auth
           request:
             schemas:
               application/json: ${file(models/create-todo-model.json)}
@@ -99,6 +103,8 @@ functions:
       - http:
           method: patch
           path: todos/{todoId}
+          cors: true
+          authorizer: RS256Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -113,7 +119,8 @@ functions:
       - http:
           method: delete
           path: todos/{todoId}
-
+          cors: true
+          authorizer: RS256Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -128,7 +135,8 @@ functions:
       - http:
           method: post
           path: todos/{todoId}/attachment
-
+          cors: true
+          authorizer: RS256Auth
     iamRoleStatements:
       - Effect: Allow
         Action:
