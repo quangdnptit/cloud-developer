@@ -44,6 +44,21 @@ provider:
             - xray:PutTraceSegments
           Resource: "*"
 
+
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Udagram API
+        description: Serverless application for images sharing
+    models:
+      - name: CreateTodoRequest
+        contentType: application/json
+        schema: ${file(docs/create-todo-doc.json)}
+      - name: UpdateTodoRequest
+        contentType: application/json
+        schema: ${file(docs/update-todo-doc.json)}        
+
 functions:
 
   # Auth:
@@ -63,6 +78,10 @@ functions:
           path: todos
           cors: true
           authorizer: RS256Auth
+          reqValidatorName: RequestBodyValidator
+          request:
+            schemas:
+              application/json: ${file(docs/create-todo-doc.json)}
 
     iamRoleStatements:
       - Effect: Allow
@@ -85,9 +104,10 @@ functions:
           path: todos
           cors: true
           authorizer: RS256Auth
+          reqValidatorName: RequestBodyValidator
           request:
             schemas:
-              application/json: ${file(models/create-todo-model.json)}
+              application/json: ${file(docs/update-todo-doc.json)}
 
     iamRoleStatements:
       - Effect: Allow
@@ -105,6 +125,7 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: RS256Auth
+     
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -121,11 +142,12 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: RS256Auth
+      
     iamRoleStatements:
       - Effect: Allow
         Action:
           - dynamodb:DeleteItem
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}     
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   # TODO: Configure this function
   # Provide property for setting up CORS, Authorizer, iamRoleStatements
@@ -159,7 +181,7 @@ resources:
         ResponseParameters:
           gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
           gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST,DELETE,PUT,PATCH'"
         ResponseType: DEFAULT_4XX
         RestApiId:
           Ref: ApiGatewayRestApi

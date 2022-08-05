@@ -4,9 +4,10 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { TodoItem } from '../models/TodoItem'
 import { TodoUpdate } from '../models/TodoUpdate';
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
+import { createLogger } from '../utils/logger'
 
 const XAWS = AWSXRay.captureAWS(AWS)
-
+const logger = createLogger('TodosAccess')
 // TODO: Implement the dataLayer logic
 export class TodoAccess {
 
@@ -16,8 +17,7 @@ export class TodoAccess {
     }
   
     async getAllTodos(): Promise<TodoItem[]> {
-      console.log('Getting all todos')
-  
+      logger.info('Getting all todos');
       const result = await this.docClient.scan({
         TableName: this.todoTable
       }).promise()
@@ -27,6 +27,7 @@ export class TodoAccess {
     }
 
     async updateAttachment(userId: String, todoId: String, url: String) {
+      logger.info('call TodosAccess.updateAttachment');
       await this.docClient.update({
         TableName: this.todoTable,
         Key: {userId: userId,  todoId: todoId },
@@ -45,11 +46,13 @@ export class TodoAccess {
     }
 
     async updateTodo(userId: String, todoId: String, updateTodoRequest: UpdateTodoRequest): Promise<TodoUpdate> {
+      logger.info('call TodosAccess.updateTodo');
       await this.docClient.update({
         TableName: this.todoTable,
         Key: {userId: userId,  todoId: todoId},
-        UpdateExpression: 'set name = :name, dueDate = :dueDate, done = :done',
+        UpdateExpression: 'set #todo_name = :name, dueDate = :dueDate, done = :done',
         ExpressionAttributeValues: { ':name': updateTodoRequest.name, ':dueDate': updateTodoRequest.dueDate,':done': updateTodoRequest.done },
+        ExpressionAttributeNames: { "#todo_name": "name" }
       }).promise()
       
       const todoUpdate: TodoUpdate = {
@@ -60,17 +63,29 @@ export class TodoAccess {
     }
 
     async deleteTodo(todoId: String, userId: String) {
-      await this.docClient.delete({
-        TableName: this.todoTable,
-        Key: {userId: userId,  todoId: todoId }
+      logger.info('call TodosAccess.deleteTodo' + todoId, userId);
+      var params = {
+          TableName: this.todoTable,
+          Key: {
+              userId: userId,
+              todoId: todoId
+          }
+      };
+
+      await this.docClient.delete(params, function (err, data) {
+          if (err) console.log(err);
+          else console.log(data);
       })
+      logger.info('delete todo done');
     }
 
     async findByUserId(userId: String): Promise<TodoItem[]> {
+      logger.info('call TodosAccess.findByUserId');
       const result = await this.docClient.query({
         TableName: this.todoTable,
-        KeyConditionExpression: 'userId = :userId',
-        ExpressionAttributeValues: { ':userId': userId }
+        KeyConditionExpression: '#todo_userId = :userId',
+        ExpressionAttributeValues: { ':userId': userId },
+        ExpressionAttributeNames: { "#todo_userId": "userId" }
       }).promise()
   
       const items = result.Items   
