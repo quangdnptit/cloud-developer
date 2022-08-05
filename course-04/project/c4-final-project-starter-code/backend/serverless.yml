@@ -78,10 +78,6 @@ functions:
           path: todos
           cors: true
           authorizer: RS256Auth
-          reqValidatorName: RequestBodyValidator
-          request:
-            schemas:
-              application/json: ${file(docs/create-todo-doc.json)}
 
     iamRoleStatements:
       - Effect: Allow
@@ -107,7 +103,7 @@ functions:
           reqValidatorName: RequestBodyValidator
           request:
             schemas:
-              application/json: ${file(docs/update-todo-doc.json)}
+              application/json: ${file(docs/create-todo-doc.json)}
 
     iamRoleStatements:
       - Effect: Allow
@@ -125,6 +121,10 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: RS256Auth
+          reqValidatorName: RequestBodyValidator
+          request:
+            schemas:
+              application/json: ${file(docs/update-todo-doc.json)}
      
     iamRoleStatements:
       - Effect: Allow
