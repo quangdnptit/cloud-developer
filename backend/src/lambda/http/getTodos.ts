@@ -12,23 +12,12 @@ export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const userId = getUserId(event)
     const result = await findTodosByUserId(userId)
-
-    if (result.length !== 0) {
-      return {
-        statusCode: 200,
-        headers: {
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify(result)
-      }
-    }
-  
     return {
-      statusCode: 404,
+      statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*'
       },
-      body: ''
+      body: JSON.stringify(result)
     }
   }
 )
