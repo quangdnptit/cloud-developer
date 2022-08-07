@@ -26,6 +26,7 @@ provider:
     IS_OFFLINE: false
     TODOS_TABLE: Todos-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
+    TODOS_NAME_INDEX: NameIndex
     ATTACHMENT_S3_BUCKET: udacity12345-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
     AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
@@ -87,7 +88,9 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_CREATED_AT_INDEX}      
+        Resource: 
+          - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_CREATED_AT_INDEX}
+          - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_NAME_INDEX}      
   # TODO: Configure this function - 
   # Provide iamRoleStatements property. Decide the Actions and AWS Resource. 
   # To refer to an AWS resource defined in the "Resources" section, you can use "Resource: !GetAtt <resource-name>.Arn"
@@ -195,6 +198,8 @@ resources:
             AttributeType: S
           - AttributeName: todoId
             AttributeType: S
+          - AttributeName: name
+            AttributeType: S
           - AttributeName: createdAt
             AttributeType: S
         KeySchema:
@@ -213,6 +218,14 @@ resources:
               KeyType: RANGE
             Projection:
               ProjectionType: ALL
+          - IndexName: ${self:provider.environment.TODOS_NAME_INDEX}
+            KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: name
+              KeyType: RANGE
+            Projection:
+              ProjectionType: ALL    
 
     # TODO: Complete the bucket properties below. 
     # Do not forget to add the CorsConfiguration propoerty

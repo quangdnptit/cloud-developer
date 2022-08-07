@@ -11,7 +11,8 @@ import {
   Icon,
   Input,
   Image,
-  Loader
+  Loader,
+  Dropdown
 } from 'semantic-ui-react'
 
 import { createTodo, deleteTodo, getTodos, patchTodo } from '../api/todos-api'
@@ -26,14 +27,20 @@ interface TodosProps {
 interface TodosState {
   todos: Todo[]
   newTodoName: string
-  loadingTodos: boolean
+  loadingTodos: boolean,
+  sortBy: string,
+  pageIndex: number,
+  pageSize: number
 }
 
 export class Todos extends React.PureComponent<TodosProps, TodosState> {
   state: TodosState = {
     todos: [],
     newTodoName: '',
-    loadingTodos: true
+    loadingTodos: true,
+    sortBy: 'NameIndex',
+    pageIndex: 1,
+    pageSize: 5
   }
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,7 +98,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
 
   async componentDidMount() {
     try {
-      const todos = await getTodos(this.props.auth.getIdToken())
+      const todos = await getTodos(this.props.auth.getIdToken(), this.state.sortBy, this.state.pageIndex, this.state.pageSize)
       this.setState({
         todos,
         loadingTodos: false
@@ -107,7 +114,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
         <Header as="h1">TODOs</Header>
 
         {this.renderCreateTodoInput()}
-
+        {this.renderSortDropdown()}
         {this.renderTodos()}
       </div>
     )
@@ -154,6 +161,31 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
         </Loader>
       </Grid.Row>
     )
+  }
+
+  async onChanged(newSort: any) {
+    try {
+      const todos = await getTodos(this.props.auth.getIdToken(), newSort, this.state.pageIndex, this.state.pageSize)
+      this.setState({
+        todos,
+        loadingTodos: false,
+        sortBy: newSort
+      })
+    } catch (e) {
+      alert(`Failed to fetch todos: ${e}`)
+    }
+  }
+
+  renderSortDropdown() {
+    return (
+      <div>
+        <h1>SortBy</h1>
+      <select   onChange={(event) => this.onChanged(event.target.value)} value={this.state.sortBy}>
+        <option value="NameIndex">Name</option>
+        <option value="CreatedAtIndex">CreatedAt</option>
+      </select>
+      </div>
+    );
   }
 
   renderTodosList() {

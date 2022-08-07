@@ -14,9 +14,9 @@ export async function getAllTodos(): Promise<TodoItem[]> {
   return todoAccess.getAllTodos()
 }
 
-export async function findTodosByUserId(userId: string): Promise<TodoItem[]> {
+export async function findTodosByUserId(userId: string, sortBy: string): Promise<TodoItem[]> {
   logger.info('calling businessTodos.findTodosByUserId with userid: ' + userId );
-  return todoAccess.findByUserId(userId)
+  return todoAccess.findByUserId(userId, sortBy)
 }
 
 export async function createTodo(
