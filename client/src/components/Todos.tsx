@@ -29,8 +29,7 @@ interface TodosState {
   newTodoName: string
   loadingTodos: boolean,
   sortBy: string,
-  pageIndex: number,
-  pageSize: number
+  scanIndexForward: true
 }
 
 export class Todos extends React.PureComponent<TodosProps, TodosState> {
@@ -39,8 +38,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     newTodoName: '',
     loadingTodos: true,
     sortBy: 'NameIndex',
-    pageIndex: 1,
-    pageSize: 5
+    scanIndexForward: true,
   }
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,7 +96,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
 
   async componentDidMount() {
     try {
-      const todos = await getTodos(this.props.auth.getIdToken(), this.state.sortBy, this.state.pageIndex, this.state.pageSize)
+      const todos = await getTodos(this.props.auth.getIdToken(), this.state.sortBy, this.state.scanIndexForward)
       this.setState({
         todos,
         loadingTodos: false
@@ -165,11 +163,25 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
 
   async onChanged(newSort: any) {
     try {
-      const todos = await getTodos(this.props.auth.getIdToken(), newSort, this.state.pageIndex, this.state.pageSize)
+      const todos = await getTodos(this.props.auth.getIdToken(), newSort, this.state.scanIndexForward)
       this.setState({
         todos,
         loadingTodos: false,
         sortBy: newSort
+      })
+    } catch (e) {
+      alert(`Failed to fetch todos: ${e}`)
+    }
+  }
+
+
+  async onChangedDirection(sortDirection: any) {
+    try {
+      const todos = await getTodos(this.props.auth.getIdToken(), this.state.sortBy, sortDirection)
+      this.setState({
+        todos,
+        loadingTodos: false,
+        scanIndexForward: sortDirection
       })
     } catch (e) {
       alert(`Failed to fetch todos: ${e}`)
@@ -183,6 +195,12 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
       <select   onChange={(event) => this.onChanged(event.target.value)} value={this.state.sortBy}>
         <option value="NameIndex">Name</option>
         <option value="CreatedAtIndex">CreatedAt</option>
+      </select>
+
+      <h1>Sort Direction</h1>
+      <select   onChange={(event) => this.onChangedDirection(event.target.value)} value={this.state.sortBy}>
+        <option value="true">ASC</option>
+        <option value="false">DESC</option>
       </select>
       </div>
     );

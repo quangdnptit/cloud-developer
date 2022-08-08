@@ -79,18 +79,21 @@ export class TodoAccess {
       logger.info('delete todo done');
     }
 
-    async findByUserId(userId: String, sortBy: string): Promise<TodoItem[]> {
-      logger.info('call TodosAccess.findByUserId' + sortBy);
-      const result = await this.docClient.query({
+    async findByUserId(userId: String, sortBy: string, scanIndexForward: boolean): Promise<TodoItem[]> {
+      logger.info('call TodosAccess.findByUserId');
+      
+      const params: any = {
         TableName: this.todoTable,
         KeyConditionExpression: '#todo_userId = :userId',
         ExpressionAttributeValues: { ':userId': userId },
         ExpressionAttributeNames: { "#todo_userId": "userId" },
         IndexName: sortBy,
-        ScanIndexForward : true
-      }).promise()
-  
-      const items = result.Items   
+        ScanIndexForward : scanIndexForward
+      }
+
+      logger.info('call TodosAccess.findByUserId params' + JSON.stringify(params));
+      const result = await this.docClient.query(params).promise()
+      const items = result.Items
       return items as TodoItem[]
     }
   }

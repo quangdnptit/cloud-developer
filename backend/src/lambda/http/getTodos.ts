@@ -14,8 +14,9 @@ export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     logger.info('event: ' + JSON.stringify(event));
     const sortBy = event.queryStringParameters.sortBy
+    const scanIndexForward = event.queryStringParameters.scanIndexForward == 'true'
     const userId = getUserId(event)
-    const result = await findTodosByUserId(userId, sortBy)
+    const result = await findTodosByUserId(userId, sortBy, scanIndexForward)
     return {
       statusCode: 200,
       headers: {
